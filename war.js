@@ -29,6 +29,8 @@
 
 		this.tableCards = {};
 
+		this.ranks = [];
+
 		//make sure there are only even number of player to play the game
 		if(players % 2 != 0 ){
 			throw "Can only accept Even number of players";
@@ -74,27 +76,81 @@
 		},
 
 		//draw cards and place card on table(tableCards)
-		draw: function(){
-
+		draw: function(winner){
 			var self = this;
+			var playersDeck = self.playersDeck;
+			var tableCards = self.tableCards;
 			//If table is empty,draw one card. If table already have cards,
 			//draw 2
-			var drawAmount = (!self.tableCards[1]) ? 1 : 2;
+			var drawAmount = (winner.length < 2) ? 1 : 2;
 
-			for ( var player in self.playersDeck){
+			for ( var player in playersDeck){
 				//remove card from top of the hand and place them on table
-				var drawnCard = self.playersDeck[player].splice(0,drawAmount);
+				if(playersDeck[player].length != 0){
+					var drawnCard = playersDeck[player].splice(0,drawAmount);
 
-				if(!self.tableCards[player]){
-					self.tableCards[player] = drawnCard;
+					if(winner.length < 2){
+						tableCards[player] = drawnCard;
+					}else{
+						tableCards[player] = tableCards[player].concat(drawnCard);
+					}
 				}else{
-					self.tableCards[player] = self.tableCards[player].concat(drawnCard);
+					self.ranks.push(player);
+					delete playersDeck[player];
 				}
 			}
-			return self.tableCards;
+			return tableCards;
+		},
 
+		//compare the cards and decide who wins or who goes to war
+		compare: function(prevWinners){
 
-		}
+			//temp array for sorting and comparing player's cards
+			var sortedTable = [];
+			//temp array for storing winners
+			var nextWinners = [];
+			//push tableCards into sortdTable array in order to be sorted and compared
+			var tableCards = this.tableCards;
+			if(prevWinners.length > 1){
+				sortedTable = prevWinners.map(function(winner){
+					return {
+						card:tableCards[winner.player][tableCards[winner.player].length - 1],
+						player:winner.player
+					};
+				});
+			}else{
+				for(var player in tableCards){
+					var obj = {
+						card : tableCards[player][tableCards[player].length -1],
+						player:player
+					};
+					sortedTable.push(obj);
+				}
+			}
+
+			//sort cards from highest to lowest
+			sortedTable = sortedTable.sort(function(a , b){
+				return a["card"] - b["card"];
+			});
+			//sortedTable yield same results everytime. Look at tableCards;
+
+			//check to see if there are more than 1 winners
+			var pileSize = sortedTable.length - 1;
+
+			for( var x = pileSize ; x > 0 ; x-- ){
+				if(sortedTable[x].card === sortedTable[pileSize].card){
+					nextWinners.push(sortedTable[x]);
+				}else{
+					break;
+				}
+			}
+			console.log(sortedTable);
+			console.log(nextWinners);
+			return nextWinners;
+		},
+
+		//winner of the war takes all of the cards
+
 	};
 
 	//export war to be used as a library
