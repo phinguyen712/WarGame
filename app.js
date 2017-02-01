@@ -1,13 +1,20 @@
 (function(){
 
-	var war = window.war(12);
+	var war = window.war(4);
+
+	var remainingPlayers = 2;
+
 	war.shuffle();
 	war.deal();
 
-	console.log(drawCard([]));
-	//recursion for drawing cards until one player win
+	while(remainingPlayers > 1){
+		drawCard([]);
+		remainingPlayers = trackRemainingPlayers();
+	}
+	console.log(war.playersDeck);
+	console.log(war.ranks);
 	function drawCard(winner){
-		//basee case
+		//base case
 		war.draw(winner);
 		winner = war.compare(winner);
 		//recursion
@@ -16,6 +23,17 @@
 		}else{
 			return drawCard(winner);
 		}
+	}
+
+	function trackRemainingPlayers(){
+		var playerCounter = 0;
+
+		for(var player in war.playersDeck){
+			if(player){
+				playerCounter ++;
+			}
+		}
+		return playerCounter;
 	}
 
 })();

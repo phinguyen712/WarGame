@@ -48,14 +48,19 @@
 		shuffle: function(){
 			var array = this.deck;
 
+			return this.random(array);
 			//algorithm for random sorting
+		},
+
+		//method for random sorting
+		random:	function(array){
 			for (var i = array.length - 1; i > 0; i--) {
 				var j = Math.floor(Math.random() * (i + 1));
 				var temp = array[i];
+
 				array[i] = array[j];
 				array[j] = temp;
 			}
-
 			return array;
 		},
 
@@ -86,17 +91,12 @@
 
 			for ( var player in playersDeck){
 				//remove card from top of the hand and place them on table
-				if(playersDeck[player].length != 0){
-					var drawnCard = playersDeck[player].splice(0,drawAmount);
+				var drawnCard = playersDeck[player].splice(0,drawAmount);
 
-					if(winner.length < 2){
-						tableCards[player] = drawnCard;
-					}else{
-						tableCards[player] = tableCards[player].concat(drawnCard);
-					}
+				if(winner.length < 2){
+					tableCards[player] = drawnCard;
 				}else{
-					self.ranks.push(player);
-					delete playersDeck[player];
+					tableCards[player] = [...tableCards[player],...drawnCard];
 				}
 			}
 			return tableCards;
@@ -104,7 +104,6 @@
 
 		//compare the cards and decide who wins or who goes to war
 		compare: function(prevWinners){
-
 			//temp array for sorting and comparing player's cards
 			var sortedTable = [];
 			//temp array for storing winners
@@ -144,13 +143,42 @@
 					break;
 				}
 			}
-			console.log(sortedTable);
-			console.log(nextWinners);
+
+			if(nextWinners.length === 1){
+				this.winnerTakesCards(nextWinners);
+			}
 			return nextWinners;
 		},
 
 		//winner of the war takes all of the cards
+		winnerTakesCards:function(winner){
+			//store all cards on the table in a temp array to shuffle before
+			//placing them in the winners deck(this randomizes hand to prevent
+			// possible infinite loops)
+			var tableCards = this.tableCards;
+			var playersDeck = this.playersDeck;
+			var ranks = this.ranks;
+			var winnerPot = [];
+			//place all cards on the table in pot
+			for(var hands in tableCards){
+				tableCards[hands].forEach(function(card){
+					winnerPot.push(card);
+				});
+			}
+			//clear table
+			this.tableCards = {};
+			//randomize pot before placing in winner's hand so that we don't have infinite loops
+			winnerPot = this.random(winnerPot);
+			//winner takes all of the cards on the table and place at the bottom of their deck
 
+			this.playersDeck[winner[0].player] = [...playersDeck[winner[0].player],...winnerPot];
+			for(var player in playersDeck){
+				if(playersDeck[player].length === 0){
+					ranks.push(player);
+					delete playersDeck[player];
+				}
+			}
+		},
 	};
 
 	//export war to be used as a library
